@@ -254,7 +254,7 @@ class BatchAnalysis(object):
                             func_args=np.append(func_args,np.array([col,row,fov,t]).reshape(1,4),axis=0)
         if (os.name == 'nt'):
             # Windows does not fork, so it's safe to use the multiprocessing directly.
-            self._process_jobs_nt(func_args)
+            self._process_jobs_posix(func_args, jobs_number)
         else:
             # For POSIX systems, ensure safe multiprocessing context
             self._process_jobs_posix(func_args, jobs_number)
@@ -279,7 +279,7 @@ class BatchAnalysis(object):
             Parallel(n_jobs=jobs_number, prefer="threads")(delayed(self.Calculate_Spot_Distances)(row, col) for row in rows for col in columns)
      
         if self.params_dict['Cell_Tracking_check_status'] == True:
-            self.ImageAnalyzer = image_analyzer
+            self.ImageAnalyzer = ImageAnalyzer(self.params_dict)
             xlsx_name = ['Nuclei_Information.csv']
             xlsx_full_name = os.path.join(os.path.join(self.output_folder,"whole_plate_resutls"), xlsx_name[0])
             self.cell_df = pd.read_csv(xlsx_full_name).drop(["Unnamed: 0"], axis=1)
@@ -564,7 +564,8 @@ class BatchAnalysis(object):
                                     temp_transformed = []
                                     for i in range(len(np.where(only_spots_patch[str(int(chnl))]>0)[0])):
 
-                                        temp_spots.append(np.array([np.where(only_spots_patch[str(int(chnl))]>0)[0][i], np.where(only_spots_patch[str(int(chnl))]>0)[1][i]]))
+                                        temp_spots.append(np.array([np.where(only_spots_patch[str(int(chnl))]>0)[0][i], 
+                                                                    np.where(only_spots_patch[str(int(chnl))]>0)[1][i]]))
                                         temp_transformed.append(Tracking.rotate_point((label_center-0.5,label_center-0.5),
                                                                              np.array([np.where(only_spots_patch[str(int(chnl))]>0)[0][i], 
                                                                                        np.where(only_spots_patch[str(int(chnl))]>0)[1][i]]), 
